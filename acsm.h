@@ -29,7 +29,7 @@ typedef struct {
 typedef struct acsm_pattern_s {
     u_char        *string;
     size_t         len;
-
+    int pattern_id; // 新增字段，用于存储模式串的序号
     struct acsm_pattern_s *next;
 } acsm_pattern_t;
 
@@ -40,6 +40,7 @@ typedef struct {
 
     /* output */
     acsm_pattern_t *match_list;
+
 } acsm_state_node_t;
 
 
@@ -59,6 +60,11 @@ typedef struct {
 
 } acsm_context_t;
 
+typedef struct {
+    int *patterns; // 存储模式串序号的数组
+    size_t count;  // 数组中序号的数量
+} match_result_t;
+
 
 #define acsm_tolower(c)      (u_char) ((c >= 'A' && c <= 'Z') ? (c | 0x20) : c)
 
@@ -70,9 +76,9 @@ typedef struct {
 extern acsm_context_t *acsm_alloc(int flag);
 extern void acsm_free(acsm_context_t *ctx);
 
-extern int acsm_add_pattern(acsm_context_t *ctx, u_char *string, size_t len); 
+extern int acsm_add_pattern(acsm_context_t *ctx, u_char *string, size_t len, int pattern_id); 
 extern int acsm_compile(acsm_context_t *ctx);
-extern int acsm_search(acsm_context_t *ctx, u_char *string, size_t len);
+extern match_result_t acsm_search(acsm_context_t *ctx, u_char *string, size_t len);
 
 #define acsm_queue_init(q)                                                    \
     (q)->prev = q;                                                            \
