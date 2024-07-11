@@ -346,14 +346,25 @@ int matchpattern_BM(ATTACKPATTERN *pOnepattern, PACKETINFO *pOnepacket, int i){
 }
 
 int matchpattern_AC(int pattern_len, PACKETINFO *pOnepacket){
-	
+	ATTACKPATTERN *pOnepattern2 = pPatternHeader2;
 	char *text = pOnepacket -> packetcontent; //text have bugs
 	//printf("%s\n",text);
 	//char *text = "aaaaa helloaaa";
 	char text_len = pOnepacket ->contentlen;
-	int match = acsm_search(ctx, (u_char *)text, acsm_strlen(text));
+	match_result_t matches = acsm_search(ctx, (u_char *)text, acsm_strlen(text));
 	//printf("%d",match);
-    if (match==pattern_len) {
+    if (matches.count > 0) {
+		for (size_t i = 0; i < matches.count; ++i) {
+            int count = matches.patterns[i];
+			//printf("%d\n",count);
+			pOnepattern2 = pPatternHeader2;
+			while(pOnepattern2 != NULL && count!=0){
+			pOnepattern2 = pOnepattern2->next;
+			count--;
+			}
+			output_alert(pOnepattern2, pOnepacket);
+        }
+        //printf("\n");
         return 1;
     }
     else {
@@ -409,10 +420,10 @@ void pcap_callback(u_char *user,const struct pcap_pkthdr *header,const u_char *p
 		}
 		pOnepattern2 = pPatternHeader2;
 		int match2=matchpattern_AC(pattern_len2, &onepacket);
-		if (match2==1){
+		/*if (match2==1){
 			output_alert(pOnepattern2, &onepacket);
 		}
-		/*int i=0;
+		int i=0;
     	ATTACKPATTERN *pOnepattern = pPatternHeader;
 		while(pOnepattern != NULL){
 			if (matchpattern_BM(pOnepattern, &onepacket, i)){
@@ -451,9 +462,10 @@ int main(int argc,char *argv[])
         fprintf(stderr, "acsm_alloc() error.\n");
         return -1;
     }
+	int pattern_id = 0; // 初始化模式串序号
    
     while(pOnepattern2 != NULL) {
-        if (acsm_add_pattern(ctx, (u_char *)(pOnepattern2 ->patterncontent), acsm_strlen((u_char *)(pOnepattern2 ->patterncontent))) != 0) {
+        if (acsm_add_pattern(ctx, (u_char *)(pOnepattern2 ->patterncontent), acsm_strlen((u_char *)(pOnepattern2 ->patterncontent)), pattern_id) != 0) {
             fprintf(stderr, "acsm_add_pattern() with pattern \"%s\" error.\n", 
                     (u_char *)(pOnepattern2 ->patterncontent));
             return -1;
@@ -461,6 +473,7 @@ int main(int argc,char *argv[])
 		printf("%s\n",pOnepattern2 ->patterncontent);
 
         pOnepattern2 = pOnepattern2->next;
+		pattern_id++;
     }
 
     debug_printf("after add_pattern: max_state=%d\n", ctx->max_state);
