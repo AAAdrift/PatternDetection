@@ -201,7 +201,7 @@ void acsm_free(acsm_context_t *ctx)
 }
 
 
-int acsm_add_pattern(acsm_context_t *ctx, u_char *string, size_t len) 
+int acsm_add_pattern(acsm_context_t *ctx, u_char *string, size_t len, int pattern_id) 
 {
     u_char ch;
     size_t i;
@@ -213,6 +213,7 @@ int acsm_add_pattern(acsm_context_t *ctx, u_char *string, size_t len)
     }
 
     p->len = len;
+    p->pattern_id = pattern_id; // 存储模式串的序号
 
     if (len > 0) {
         p->string = malloc(len);
@@ -351,14 +352,15 @@ int acsm_compile(acsm_context_t *ctx)
 }
 
 
-int acsm_search(acsm_context_t *ctx, u_char *text, size_t len)
+match_result_t acsm_search(acsm_context_t *ctx, u_char *text, size_t len)
 {
+    match_result_t result = {NULL, 0};
     int state = 0;
     u_char *p, *last, ch;
 
     p = text;
     last = text + len;
-    int matches_found = 0;
+
 
     while (p < last) {
         ch = ctx->no_case ? acsm_tolower((*p)) : (*p);
@@ -368,13 +370,21 @@ int acsm_search(acsm_context_t *ctx, u_char *text, size_t len)
         }
 
         state = ctx->state_table[state].next_state[ch];
+        acsm_pattern_t *match = ctx->state_table[state].match_list;
 
-        if (ctx->state_table[state].match_list) {
-            matches_found++;
+        if (match) {
+            while (match) {
+                // 假设每个模式串的序号存储在match->pattern_id中
+                result.patterns = realloc(result.patterns, (result.count + 1) * sizeof(int));
+                result.patterns[result.count] = match->pattern_id;
+                result.count++;
+                match = match->next;
+            }
+
         }
 
         p++;
     }
-    return matches_found;  // 返回当前搜索找到的匹配数量
+    return result;  // 返回当前搜索找到的匹配数量
 
 }
