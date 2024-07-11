@@ -9,6 +9,7 @@
 #include <stdbool.h>
 #include <stdarg.h>
 #include "acsm.h"
+#include <sys/time.h>
 
 
 
@@ -345,7 +346,7 @@ int matchpattern_BM(ATTACKPATTERN *pOnepattern, PACKETINFO *pOnepacket, int i){
 
 }
 
-int matchpattern_AC(int pattern_len, PACKETINFO *pOnepacket){
+int matchpattern_AC(int pattern_len, PACKETINFO *pOnepacket, const struct pcap_pkthdr *header){
 	ATTACKPATTERN *pOnepattern2 = pPatternHeader2;
 	char *text = pOnepacket -> packetcontent; //text have bugs
 	//printf("%s\n",text);
@@ -362,7 +363,7 @@ int matchpattern_AC(int pattern_len, PACKETINFO *pOnepacket){
 			pOnepattern2 = pOnepattern2->next;
 			count--;
 			}
-			output_alert(pOnepattern2, pOnepacket);
+			output_alert(pOnepattern2, pOnepacket,header);
         }
         //printf("\n");
         return 1;
@@ -374,11 +375,31 @@ int matchpattern_AC(int pattern_len, PACKETINFO *pOnepacket){
 }
 
 
-void output_alert(ATTACKPATTERN *pOnepattern,PACKETINFO *pOnepacket)
+void output_alert(ATTACKPATTERN *pOnepattern,PACKETINFO *pOnepacket,const struct pcap_pkthdr *header)
 {
-  	printf("发现特征串攻击:\n     攻击类型  %s   ", pOnepattern->attackdes);
+	// 日志文件路径
+    const char *logFilePath = "attack_log.txt";
+
+    // 打开或创建日志文件
+    FILE *logFile = fopen(logFilePath, "a"); // 使用 "a" 模式来追加写入
+    if (logFile == NULL) {
+        perror("Error opening log file");
+        return;
+    }
+
+    // 写入日志文件
+	fprintf(logFile, "[Time: %lld.%lld]\n",header->ts.tv_sec, header->ts.tv_usec);
+	fprintf(logFile, "[%s]\t", pOnepattern->attackdes);
+	fprintf(logFile, "%u.%u.%u.%u ==> ", pOnepacket->src_ip[0], pOnepacket->src_ip[1], pOnepacket->src_ip[2], pOnepacket->src_ip[3]);
+	fprintf(logFile, "%u.%u.%u.%u\n", pOnepacket->dest_ip[0], pOnepacket->dest_ip[1], pOnepacket->dest_ip[2], pOnepacket->dest_ip[3]);
+  	fprintf(logFile, "%s\n\n",pOnepacket->packetcontent);
+	printf("发现特征串攻击:\n     攻击类型  %s   ", pOnepattern->attackdes);
   	printf("%d.%d.%d.%d ==> ",pOnepacket->src_ip[0],pOnepacket->src_ip[1],pOnepacket->src_ip[2],pOnepacket->src_ip[3]);
   	printf("%d.%d.%d.%d\n",pOnepacket->dest_ip[0],pOnepacket->dest_ip[1],pOnepacket->dest_ip[2],pOnepacket->dest_ip[3]);
+
+
+	// 关闭日志文件
+    fclose(logFile);
 }
 
 
@@ -407,7 +428,7 @@ void pcap_callback(u_char *user,const struct pcap_pkthdr *header,const u_char *p
 		int i=0;
 		while(pOnepattern != NULL){
 			if (matchpattern_BM(pOnepattern, &onepacket, i)){
-				output_alert(pOnepattern, &onepacket);
+				output_alert(pOnepattern, &onepacket, header);
 			}
 			pOnepattern = pOnepattern->next;
 			i++;
@@ -419,7 +440,7 @@ void pcap_callback(u_char *user,const struct pcap_pkthdr *header,const u_char *p
 			pOnepattern2 = pOnepattern2->next;
 		}
 		pOnepattern2 = pPatternHeader2;
-		int match2=matchpattern_AC(pattern_len2, &onepacket);
+		int match2=matchpattern_AC(pattern_len2, &onepacket, header);
 		/*if (match2==1){
 			output_alert(pOnepattern2, &onepacket);
 		}
@@ -497,6 +518,7 @@ int main(int argc,char *argv[])
   	phandle = pcap_open_live(device,200,1,500,errbuf);                    //打开设备
   	if(phandle == NULL)
 	  	exit(0);
+
   	if(pcap_compile(phandle,&fcode,"ip and tcp",0,ipmask) == -1) exit(0);         //设置过滤器，只捕获ip&tcp报头的包
   	if(pcap_setfilter(phandle,&fcode) == -1)
 	 	exit(0);
