@@ -2,10 +2,10 @@
 CC=gcc
 
 # 定义编译选项
-CFLAGS=-Wall -Wextra -I. -DDEBUG=1  # 添加其他需要的编译选项
+CFLAGS=-Wall -Wextra -I/usr/include/mysql -DDEBUG=1  # 添加其他需要的编译选项
 
 # 定义链接选项
-LDFLAGS=-lpcap
+LDFLAGS=-lpcap -lmysqlclient
 
 # 定义目标文件
 TARGET=my_program
