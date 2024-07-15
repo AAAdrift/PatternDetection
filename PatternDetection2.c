@@ -10,7 +10,7 @@
 #include <stdarg.h>
 #include "acsm.h"
 #include <sys/time.h>
-
+#include <mysql.h>
 
 
 
@@ -28,6 +28,18 @@ typedef struct { //ip头格式
 	u_char sourceIP[4];
 	u_char destIP[4];
 }IPHEADER;
+
+typedef struct { //ip头格式
+	u_int16_t th_sport;   // 源端口
+    u_int16_t th_dport;   // 目的端口
+    u_int32_t th_seq;     // 序列号
+    u_int32_t th_ack;     // 确认号
+    u_int8_t  th_offx2;   // 数据偏移和保留字段
+    u_int8_t  th_flags;   // 标志位
+    u_int16_t th_win;     // 窗口大小
+    u_int16_t th_sum;     // 校验和
+    u_int16_t th_urp;     // 紧急指针
+}TCPHEADER;
 
 typedef struct Packetinfo{
 	u_char src_ip[4];
@@ -67,6 +79,70 @@ int parse_para(int argc,char*argv[],char *filename,char *filename2){
   		return 0;
 	}
 }
+
+int readpattern_sql(){
+	MYSQL *conn;
+    MYSQL_RES *res;
+    MYSQL_ROW row;
+    const char *server = "localhost";
+    const char *user = "root";
+    const char *password = "198929"; // 替换为你的密码
+    const char *database = "ids_rules"; // 替换为你的数据库名
+
+    conn = mysql_init(NULL);
+
+	pPatternHeader2 = NULL;
+	minpattern_len2 = 1000;
+	
+    // 连接到 MySQL
+    if (!mysql_real_connect(conn, server, user, password, database, 0, NULL, 0)) {
+        fprintf(stderr, "Error connecting to database: %s\n", mysql_error(conn));
+        mysql_close(conn);
+        return 1;
+    }
+
+    printf("Connected to database successfully\n");
+
+    // 执行查询
+    if (mysql_query(conn, "SELECT * FROM tcp_rules")) { // 替换为你的表名
+        fprintf(stderr, "Error executing query: %s\n", mysql_error(conn));
+        mysql_close(conn);
+        return 1;
+    }
+
+    // 获取结果
+    res = mysql_store_result(conn);
+
+    // 打印查询结果
+    while ((row = mysql_fetch_row(res)) != NULL) {
+		ATTACKPATTERN *pOnepattern;
+		pOnepattern = malloc(sizeof(ATTACKPATTERN));
+
+		pOnepattern->patternlen=strlen(row[1]);
+		memcpy(pOnepattern->attackdes, row[0], strlen(row[0]));
+		memcpy(pOnepattern->patterncontent, row[1], pOnepattern->patternlen);
+
+		if (pOnepattern->patternlen < minpattern_len2)
+			minpattern_len2 = pOnepattern->patternlen;
+		pOnepattern->next = NULL;
+
+		if (pPatternHeader2 == NULL)
+			pPatternHeader2 = pOnepattern;
+		else{
+			pOnepattern->next = pPatternHeader2;
+			pPatternHeader2 = pOnepattern;
+		}
+	}
+
+    // 清理
+    mysql_free_result(res);
+    mysql_close(conn);
+	if (pPatternHeader2 == NULL) 
+		return 1;
+
+    return 0;
+}
+
 
 int readpattern(char *patternfile){
 	FILE *file;
@@ -389,9 +465,9 @@ void output_alert(ATTACKPATTERN *pOnepattern,PACKETINFO *pOnepacket,const struct
 
     // 写入日志文件
 	fprintf(logFile, "[Time: %lld.%lld]\n",header->ts.tv_sec, header->ts.tv_usec);
-	fprintf(logFile, "[%s]\t", pOnepattern->attackdes);
-	fprintf(logFile, "%u.%u.%u.%u ==> ", pOnepacket->src_ip[0], pOnepacket->src_ip[1], pOnepacket->src_ip[2], pOnepacket->src_ip[3]);
-	fprintf(logFile, "%u.%u.%u.%u\n", pOnepacket->dest_ip[0], pOnepacket->dest_ip[1], pOnepacket->dest_ip[2], pOnepacket->dest_ip[3]);
+    fprintf(logFile, "[%s]\t", pOnepattern->attackdes);
+    fprintf(logFile, "%u.%u.%u.%u ==> ", pOnepacket->src_ip[0], pOnepacket->src_ip[1], pOnepacket->src_ip[2], pOnepacket->src_ip[3]);
+    fprintf(logFile, "%u.%u.%u.%u\n", pOnepacket->dest_ip[0], pOnepacket->dest_ip[1], pOnepacket->dest_ip[2], pOnepacket->dest_ip[3]);
   	fprintf(logFile, "%s\n\n",pOnepacket->packetcontent);
 	printf("发现特征串攻击:\n     攻击类型  %s   ", pOnepattern->attackdes);
   	printf("%d.%d.%d.%d ==> ",pOnepacket->src_ip[0],pOnepacket->src_ip[1],pOnepacket->src_ip[2],pOnepacket->src_ip[3]);
@@ -421,8 +497,14 @@ void pcap_callback(u_char *user,const struct pcap_pkthdr *header,const u_char *p
 		if (onepacket.contentlen < minpattern_len)
 			return;
 		onepacket.packetcontent = (char *)(pkt_data + 14 + 20 + 20);
-   	strncpy(onepacket.src_ip,ip_header->sourceIP,4);
+   		strncpy(onepacket.src_ip,ip_header->sourceIP,4);
     	strncpy(onepacket.dest_ip,ip_header->destIP,4);
+
+		TCPHEADER *tcp_header = (TCPHEADER *)((char *)ip_header + (ip_header->header_len * 4));
+        //printf("TCP数据包，源端口：%d，目的端口：%d\n",
+        //       ntohs(tcp_header->th_sport),
+        //       ntohs(tcp_header->th_dport));
+		
 		
 		ATTACKPATTERN *pOnepattern = pPatternHeader;
 		int i=0;
@@ -471,8 +553,9 @@ int main(int argc,char *argv[])
 	if (readpattern(patternfile))
 		exit(0);
 
-	if (readpattern2(patternfile2))
-		exit(0);
+	//if (readpattern2(patternfile2))
+	//	exit(0);
+	if (readpattern_sql()) exit(0);
 
 	ATTACKPATTERN *pOnepattern2 = pPatternHeader2;
 
@@ -491,7 +574,7 @@ int main(int argc,char *argv[])
                     (u_char *)(pOnepattern2 ->patterncontent));
             return -1;
         }
-		printf("%s\n",pOnepattern2 ->patterncontent);
+		//printf("%s\n",pOnepattern2 ->patterncontent);
 
         pOnepattern2 = pOnepattern2->next;
 		pattern_id++;
@@ -501,12 +584,11 @@ int main(int argc,char *argv[])
 	if (acsm_compile(ctx) != 0) {
         fprintf(stderr, "acsm_compile() error.\n");
         return -1;
-    }
-    
+    }    
     
 
   	if((device = pcap_lookupdev(errbuf)) == NULL) exit(0);                 //获得可用的网络设备名.
-  	if(pcap_lookupnet(device,&ipaddress,&ipmask,errbuf)==-1)    //获得ip和子网掩码
+	if(pcap_lookupnet(device,&ipaddress,&ipmask,errbuf)==-1)    //获得ip和子网掩码
    	exit(0);
   	else {
     	char net[INET_ADDRSTRLEN],mask[INET_ADDRSTRLEN];
@@ -516,13 +598,15 @@ int main(int argc,char *argv[])
 			if(inet_ntop(AF_INET,&ipmask,mask,sizeof(mask)) == NULL)	exit(0);
     	}
   	phandle = pcap_open_live(device,200,1,500,errbuf);                    //打开设备
-  	if(phandle == NULL)
+	if(phandle == NULL)
 	  	exit(0);
 
-  	if(pcap_compile(phandle,&fcode,"ip and tcp",0,ipmask) == -1) exit(0);         //设置过滤器，只捕获ip&tcp报头的包
-  	if(pcap_setfilter(phandle,&fcode) == -1)
+	if(pcap_compile(phandle,&fcode,"ip and tcp",0,ipmask) == -1) exit(0);         //设置过滤器，只捕获ip&tcp报头的包
+
+	if(pcap_setfilter(phandle,&fcode) == -1)
 	 	exit(0);
-	
+
+
 	ATTACKPATTERN *pOnepattern = pPatternHeader;
 	int pattern_len = 0;
 	while(pOnepattern != NULL){
