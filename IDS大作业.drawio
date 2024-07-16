@@ -1,62 +1,74 @@
-<mxfile host="app.diagrams.net" modified="2024-07-16T23:13:17.657Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36 Edg/126.0.0.0" etag="B9A5V_dcHIDZRz3tEFcj" version="24.4.13" type="github">
+<mxfile host="app.diagrams.net" modified="2024-07-16T23:18:45.929Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36 Edg/126.0.0.0" etag="-pAt1SHDsvUIRKXpzh9i" version="24.4.13" type="github">
   <diagram name="第 1 页" id="oSVgnBATJZnSfv05QAZ7">
-    <mxGraphModel dx="1243" dy="733" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+    <mxGraphModel dx="1492" dy="880" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
         <mxCell id="Ud5ErZNsMnQj6UJQboFC-1" value="&lt;span style=&quot;color: rgb(51, 51, 51); font-family: -apple-system, BlinkMacSystemFont, &amp;quot;Helvetica Neue&amp;quot;, Helvetica, &amp;quot;Segoe UI&amp;quot;, Arial, Roboto, &amp;quot;PingFang SC&amp;quot;, &amp;quot;Hiragino Sans GB&amp;quot;, &amp;quot;Microsoft Yahei&amp;quot;, sans-serif; font-size: 16px; text-align: start;&quot;&gt;IDS-evasive mode 2 (/./目录插入)&lt;/span&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
-          <mxGeometry x="134" y="140" width="280" height="30" as="geometry" />
+          <mxGeometry x="160" y="210" width="276" height="30" as="geometry" />
         </mxCell>
         <mxCell id="Ud5ErZNsMnQj6UJQboFC-2" value="&lt;span style=&quot;color: rgb(51, 51, 51); font-family: -apple-system, BlinkMacSystemFont, &amp;quot;Helvetica Neue&amp;quot;, Helvetica, &amp;quot;Segoe UI&amp;quot;, Arial, Roboto, &amp;quot;PingFang SC&amp;quot;, &amp;quot;Hiragino Sans GB&amp;quot;, &amp;quot;Microsoft Yahei&amp;quot;, sans-serif; font-size: 16px; text-align: start;&quot;&gt;编码&lt;/span&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
-          <mxGeometry x="134" y="50" width="200" height="30" as="geometry" />
+          <mxGeometry x="160" y="50" width="196" height="30" as="geometry" />
         </mxCell>
         <mxCell id="Ud5ErZNsMnQj6UJQboFC-3" value="&lt;span style=&quot;color: rgb(51, 51, 51); font-family: -apple-system, BlinkMacSystemFont, &amp;quot;Helvetica Neue&amp;quot;, Helvetica, &amp;quot;Segoe UI&amp;quot;, Arial, Roboto, &amp;quot;PingFang SC&amp;quot;, &amp;quot;Hiragino Sans GB&amp;quot;, &amp;quot;Microsoft Yahei&amp;quot;, sans-serif; font-size: 16px; text-align: start;&quot;&gt;IDS-evasive mode 9 (会话拼接)&amp;nbsp;&lt;/span&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
-          <mxGeometry x="134" y="250" width="230" height="30" as="geometry" />
+          <mxGeometry x="160" y="380" width="266" height="30" as="geometry" />
         </mxCell>
         <mxCell id="Ud5ErZNsMnQj6UJQboFC-5" value="&lt;font style=&quot;font-size: 24px;&quot;&gt;4种特征串相关的IDS逃避技术&lt;/font&gt;" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
-          <mxGeometry x="20" y="60" width="100" height="280" as="geometry" />
+          <mxGeometry x="20" y="190" width="100" height="280" as="geometry" />
         </mxCell>
-        <mxCell id="Ud5ErZNsMnQj6UJQboFC-6" value="先解码后匹配" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
-          <mxGeometry x="500" y="50" width="190" height="30" as="geometry" />
+        <mxCell id="Ud5ErZNsMnQj6UJQboFC-6" value="&lt;font style=&quot;font-size: 18px;&quot;&gt;先解码后匹配&lt;/font&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="526" y="50" width="230" height="30" as="geometry" />
         </mxCell>
-        <mxCell id="Ud5ErZNsMnQj6UJQboFC-7" value="解析出规范的绝对路径后再进行匹配" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
-          <mxGeometry x="500" y="140" width="230" height="30" as="geometry" />
+        <mxCell id="Ud5ErZNsMnQj6UJQboFC-7" value="&lt;font style=&quot;font-size: 18px;&quot;&gt;解析出规范的绝对路径后再进行匹配&lt;/font&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="526" y="195" width="230" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="Ud5ErZNsMnQj6UJQboFC-9" value="进行TCP重组，用链表维护捕获的分片" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
-          <mxGeometry x="500" y="250" width="230" height="30" as="geometry" />
+        <mxCell id="Ud5ErZNsMnQj6UJQboFC-9" value="&lt;font style=&quot;font-size: 18px;&quot;&gt;进行TCP重组，用链表维护捕获的分片&lt;/font&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="526" y="380" width="310" height="30" as="geometry" />
         </mxCell>
         <mxCell id="Ud5ErZNsMnQj6UJQboFC-10" value="&lt;span style=&quot;color: rgb(51, 51, 51); font-family: -apple-system, BlinkMacSystemFont, &amp;quot;Helvetica Neue&amp;quot;, Helvetica, &amp;quot;Segoe UI&amp;quot;, Arial, Roboto, &amp;quot;PingFang SC&amp;quot;, &amp;quot;Hiragino Sans GB&amp;quot;, &amp;quot;Microsoft Yahei&amp;quot;, sans-serif; font-size: 16px; text-align: start;&quot;&gt;IDS-evasive mode 0 (NULL方法)&lt;/span&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
-          <mxGeometry x="134" y="340" width="286" height="30" as="geometry" />
+          <mxGeometry x="160" y="540" width="286" height="30" as="geometry" />
         </mxCell>
-        <mxCell id="Ud5ErZNsMnQj6UJQboFC-11" value="优化字符处理与匹配算法" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
-          <mxGeometry x="500" y="340" width="230" height="30" as="geometry" />
+        <mxCell id="Ud5ErZNsMnQj6UJQboFC-11" value="&lt;font style=&quot;font-size: 18px;&quot;&gt;优化字符处理与匹配算法&lt;/font&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="526" y="540" width="230" height="30" as="geometry" />
         </mxCell>
         <mxCell id="Ud5ErZNsMnQj6UJQboFC-12" value="&lt;font style=&quot;font-size: 24px;&quot;&gt;4种相应解决方式&lt;/font&gt;" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
-          <mxGeometry x="760" y="40" width="100" height="280" as="geometry" />
+          <mxGeometry x="806" y="170" width="100" height="280" as="geometry" />
         </mxCell>
         <mxCell id="Ud5ErZNsMnQj6UJQboFC-13" value="" style="endArrow=none;dashed=1;html=1;dashPattern=1 3;strokeWidth=2;rounded=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" edge="1" parent="1" source="Ud5ErZNsMnQj6UJQboFC-2" target="Ud5ErZNsMnQj6UJQboFC-6">
           <mxGeometry width="50" height="50" relative="1" as="geometry">
-            <mxPoint x="410" y="100" as="sourcePoint" />
-            <mxPoint x="460" y="50" as="targetPoint" />
+            <mxPoint x="436" y="100" as="sourcePoint" />
+            <mxPoint x="486" y="50" as="targetPoint" />
           </mxGeometry>
         </mxCell>
         <mxCell id="Ud5ErZNsMnQj6UJQboFC-14" value="" style="endArrow=none;dashed=1;html=1;dashPattern=1 3;strokeWidth=2;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="Ud5ErZNsMnQj6UJQboFC-1" target="Ud5ErZNsMnQj6UJQboFC-7">
           <mxGeometry width="50" height="50" relative="1" as="geometry">
-            <mxPoint x="450" y="190" as="sourcePoint" />
-            <mxPoint x="500" y="140" as="targetPoint" />
+            <mxPoint x="476" y="260" as="sourcePoint" />
+            <mxPoint x="526" y="210" as="targetPoint" />
           </mxGeometry>
         </mxCell>
         <mxCell id="Ud5ErZNsMnQj6UJQboFC-15" value="" style="endArrow=none;dashed=1;html=1;dashPattern=1 3;strokeWidth=2;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="Ud5ErZNsMnQj6UJQboFC-3" target="Ud5ErZNsMnQj6UJQboFC-9">
           <mxGeometry width="50" height="50" relative="1" as="geometry">
-            <mxPoint x="400" y="290" as="sourcePoint" />
-            <mxPoint x="450" y="240" as="targetPoint" />
+            <mxPoint x="426" y="420" as="sourcePoint" />
+            <mxPoint x="476" y="370" as="targetPoint" />
           </mxGeometry>
         </mxCell>
         <mxCell id="Ud5ErZNsMnQj6UJQboFC-16" value="" style="endArrow=none;dashed=1;html=1;dashPattern=1 3;strokeWidth=2;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="Ud5ErZNsMnQj6UJQboFC-10" target="Ud5ErZNsMnQj6UJQboFC-11">
           <mxGeometry width="50" height="50" relative="1" as="geometry">
-            <mxPoint x="470" y="350" as="sourcePoint" />
-            <mxPoint x="520" y="300" as="targetPoint" />
+            <mxPoint x="496" y="550" as="sourcePoint" />
+            <mxPoint x="546" y="500" as="targetPoint" />
           </mxGeometry>
+        </mxCell>
+        <mxCell id="Ud5ErZNsMnQj6UJQboFC-19" value="&lt;font style=&quot;font-size: 18px;&quot;&gt;URL编码&lt;/font&gt;&lt;div&gt;&lt;font size=&quot;3&quot;&gt;二进制编码&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;font size=&quot;3&quot;&gt;%u编码&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;font size=&quot;3&quot;&gt;...&lt;/font&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="160" y="80" width="196" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="Ud5ErZNsMnQj6UJQboFC-20" value="&lt;span style=&quot;font-size: 18px;&quot;&gt;/etc/passwd&lt;/span&gt;&lt;div&gt;&lt;span style=&quot;font-size: 18px;&quot;&gt;-&amp;gt;/etc/./../etc/.//passwd&lt;/span&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="160" y="240" width="276" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="Ud5ErZNsMnQj6UJQboFC-21" value="&lt;span style=&quot;color: rgb(51, 51, 51); font-family: -apple-system, &amp;quot;SF UI Text&amp;quot;, Arial, &amp;quot;PingFang SC&amp;quot;, &amp;quot;Hiragino Sans GB&amp;quot;, &amp;quot;Microsoft YaHei&amp;quot;, &amp;quot;WenQuanYi Micro Hei&amp;quot;, sans-serif, SimHei, SimSun; font-size: 16px; text-align: start; background-color: rgb(255, 255, 255);&quot;&gt;请求&quot;GET / HTTP/1.0&quot;放在不同包中：&lt;/span&gt;&lt;div&gt;&lt;span style=&quot;color: rgb(51, 51, 51); font-family: -apple-system, &amp;quot;SF UI Text&amp;quot;, Arial, &amp;quot;PingFang SC&amp;quot;, &amp;quot;Hiragino Sans GB&amp;quot;, &amp;quot;Microsoft YaHei&amp;quot;, &amp;quot;WenQuanYi Micro Hei&amp;quot;, sans-serif, SimHei, SimSun; font-size: 16px; text-align: start; background-color: rgb(255, 255, 255);&quot;&gt;(&quot;GE&quot;, &quot;T &quot;, &quot;/&quot;&lt;/span&gt;&lt;br style=&quot;box-sizing: border-box; outline: 0px; font-synthesis-style: auto; overflow-wrap: break-word; color: rgb(51, 51, 51); font-family: -apple-system, &amp;quot;SF UI Text&amp;quot;, Arial, &amp;quot;PingFang SC&amp;quot;, &amp;quot;Hiragino Sans GB&amp;quot;, &amp;quot;Microsoft YaHei&amp;quot;, &amp;quot;WenQuanYi Micro Hei&amp;quot;, sans-serif, SimHei, SimSun; font-size: 16px; text-align: start; background-color: rgb(255, 255, 255);&quot;&gt;&lt;span style=&quot;color: rgb(51, 51, 51); font-family: -apple-system, &amp;quot;SF UI Text&amp;quot;, Arial, &amp;quot;PingFang SC&amp;quot;, &amp;quot;Hiragino Sans GB&amp;quot;, &amp;quot;Microsoft YaHei&amp;quot;, &amp;quot;WenQuanYi Micro Hei&amp;quot;, sans-serif, SimHei, SimSun; font-size: 16px; text-align: start; background-color: rgb(255, 255, 255);&quot;&gt;, &quot; H&quot;, &quot;T&quot;, &quot;TP&quot;, &quot;/1&quot;, &quot;.0&quot;)&lt;/span&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="160" y="410" width="266" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="Ud5ErZNsMnQj6UJQboFC-22" value="&lt;span style=&quot;color: rgb(51, 51, 51); font-family: -apple-system, &amp;quot;SF UI Text&amp;quot;, Arial, &amp;quot;PingFang SC&amp;quot;, &amp;quot;Hiragino Sans GB&amp;quot;, &amp;quot;Microsoft YaHei&amp;quot;, &amp;quot;WenQuanYi Micro Hei&amp;quot;, sans-serif, SimHei, SimSun; text-align: start; background-color: rgb(255, 255, 255);&quot;&gt;&lt;font style=&quot;font-size: 18px;&quot;&gt;GET%00 /cgi-bin/test.cgi HTTP/1.0&lt;/font&gt;&lt;/span&gt;" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="160" y="570" width="286" height="60" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>
