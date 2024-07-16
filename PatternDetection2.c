@@ -446,11 +446,10 @@ int matchpattern_AC(int pattern_len, PACKETINFO2 *pOnepacket, const struct pcap_
 			pOnepattern2 = pOnepattern2->next;
 			count--;
 			}
+			int max_len=max(strlen(pOnepattern2->src),strlen(pOnepacket->src));
 			//添加对端口的判断
-			if(((strncmp(pOnepattern2->src,"any",3)==0)||(strncmp(pOnepattern2->src,pOnepacket->src,strlen(pOnepattern2->src))==0))&&((strncmp(pOnepattern2->des,"any",3)==0)||(strncmp(pOnepattern2->des,pOnepacket->des,strlen(pOnepattern2->des))==0)))
+			if(((strncmp(pOnepattern2->src,"any",3)==0)||(strncmp(pOnepattern2->src,pOnepacket->src,max_len)==0))&&((strncmp(pOnepattern2->des,"any",3)==0)||(strncmp(pOnepattern2->des,pOnepacket->des,max_len)==0)))
 			{
-				printf("%s\n",pOnepacket->src);
-				printf("%s\n",pOnepacket->des);
 				output_alert_2(pOnepattern2, pOnepacket,header);
 			}
 			else {
@@ -627,7 +626,7 @@ int main(int argc,char *argv[])
 
 		ATTACKPATTERN2 *pOnepattern2 = pPatternHeader2;
 		
-		ctx = acsm_alloc(NO_CASE);
+		ctx = acsm_alloc(0);
 		if (ctx == NULL) {
 			fprintf(stderr, "acsm_alloc() error.\n");
 			return -1;
