@@ -22,7 +22,7 @@ acsm.o: acsm.c acsm.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
 # 从 PatternDetection.c 生成 PatternDetection.o
-PatternDetection.o: PatternDetection.c acsm.h
+PatternDetection.o: PatternDetection_final1.c acsm.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
 # 清理编译生成的文件
