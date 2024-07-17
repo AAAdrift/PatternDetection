@@ -471,6 +471,7 @@ int matchpattern_BM(ATTACKPATTERN *pOnepattern, PACKETINFO2 *pOnepacket, int i){
 		}
 		//printf("%d;",n);
 		if(n==-1){
+            printf("成功匹配！\n");
 			return 1;
 		}
 		//printf("%d;",n);
@@ -682,7 +683,8 @@ void pcap_callback(u_char *user, const struct pcap_pkthdr *header, const u_char 
         if(onepacket.is_last_frag) {
             POnepOnepacket finalPack;
             if(!reassemble_packet(&finalPack, onepacket.id)) return;
-            printf("已完成TCP报文重组。\n\n");
+            printf("已完成TCP报文重组。结果为:\n");
+            printf("%s\n\n", finalPack.packetcontent);
 
             //解码
             //decode_base64_escape(&finalPack);
@@ -708,7 +710,7 @@ void pcap_callback(u_char *user, const struct pcap_pkthdr *header, const u_char 
             // ATTACKPATTERN *pOnepattern1 = pPatternHeader;
             // int i=0;
             // printf("开始BM算法匹配\n");
-            // while(pOnepattern != NULL){
+            // while(pOnepattern1 != NULL){
             //     if (matchpattern_BM(pOnepattern1, &finalPack, i)){
             //         output_alert(pOnepattern1, &finalPack, header);
             //         //printf("%s\n",onepacket.packetcontent);
@@ -745,7 +747,7 @@ void pcap_callback(u_char *user, const struct pcap_pkthdr *header, const u_char 
 }
 
 int main(int argc,char *argv[])
-{ 
+{
     help();
 	char c;
 	int mode;
@@ -910,6 +912,9 @@ int main(int argc,char *argv[])
 
     scanf("%c",&c);
     scanf("%c",&c);
+    if(c == "1") printf("选择暴力匹配\n");
+    else if (c == "2") printf("选择BM匹配算法\n");
+    else printf("选择AC自动机算法\n");
     
 
     printf("\033[1;34m");
