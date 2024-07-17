@@ -15,6 +15,7 @@
 #include "acsm.h"
 #include <sys/time.h>
 #include <mysql/mysql.h>
+// #include <base64.h>
 
 typedef struct { //ip头格式
 	u_char version:4;
@@ -92,9 +93,49 @@ int acsm_add_pattern(acsm_context_t *ctx, u_char *string, size_t len, int patter
 int acsm_compile(acsm_context_t *ctx);
 match_result_t acsm_search(acsm_context_t *ctx, u_char *string, size_t len);
 
+// 解码Base64编码的逃逸攻击数据
+/*void decode_base64_escape(POnepOnepacket *pkt) {
+    if (pkt->packetcontent == NULL || pkt->contentlen <= 0) {
+        fprintf(stderr, "Invalid packet data or length.\n");
+        return;
+    }
+
+    // 创建一个足够大的缓冲区用于存放解码后的数据
+    size_t decoded_len = base64_decodestring_len((const unsigned char*)pkt->packetcontent, pkt->contentlen);
+    unsigned char *decoded_data = (unsigned char*)malloc(decoded_len + 1); // +1 for null terminator
+    if (decoded_data == NULL) {
+        fprintf(stderr, "Memory allocation failed.\n");
+        return;
+    }
+
+    // 尝试解码数据
+    size_t decoded_size;
+    if (base64_decode(decoded_data, &decoded_size, (const unsigned char*)pkt->packetcontent, pkt->contentlen) != 0) {
+        fprintf(stderr, "Failed to decode Base64 data.\n");
+        free(decoded_data);
+        decoded_data = NULL;
+        return;
+    }
+
+    // 解码成功，现在可以处理decoded_data中的数据
+    // 注意：在实际应用中，你可能需要根据解码后的数据内容进行进一步的分析或处理
+    printf("Decoded data: ");
+    for (size_t i = 0; i < decoded_size; ++i) {
+        printf("%02X ", decoded_data[i]);
+    }
+    printf("\n");
+
+    //存储
+    strcpy(pkt->packetcontent, decoded_data);
+
+    // 清理分配的内存
+    free(decoded_data);
+    decode_data = NULL;
+}*/
+
 // 重组数据包
 int reassemble_packet(POnepOnepacket *pkt, u_int16_t id) {
-    // printf("Reassembling...\n");
+    printf("Reassembling...\n");
     int total_length = 0;
     char *content = NULL;
 	if(frag_num == 0) return 0;
@@ -402,6 +443,8 @@ int badChar(char badChr,int badCharIndex,int modelStrIndex[],int modelStrLen) {
 
 int matchpattern_BM(ATTACKPATTERN *pOnepattern, PACKETINFO2 *pOnepacket, int i){
 	//printf("%s\n",pOnepacket -> packetcontent);
+    printf("匹配中...");
+    printf("待匹配内容为\n%s\n", pOnepacket -> packetcontent);
 	int *patternIndex = modelStrIndex[i];
 	int m = pOnepattern->patternlen;
 	char *leftcontent = pOnepacket -> packetcontent;
@@ -639,7 +682,10 @@ void pcap_callback(u_char *user, const struct pcap_pkthdr *header, const u_char 
         if(onepacket.is_last_frag) {
             POnepOnepacket finalPack;
             if(!reassemble_packet(&finalPack, onepacket.id)) return;
-            // printf("已完成TCP报文重组。\n\n");
+            printf("已完成TCP报文重组。\n\n");
+
+            //解码
+            //decode_base64_escape(&finalPack);
 
             //暴力匹配
             ATTACKPATTERN *pOnepattern = pPatternHeader;
@@ -661,6 +707,7 @@ void pcap_callback(u_char *user, const struct pcap_pkthdr *header, const u_char 
             
             // ATTACKPATTERN *pOnepattern1 = pPatternHeader;
             // int i=0;
+            // printf("开始BM算法匹配\n");
             // while(pOnepattern != NULL){
             //     if (matchpattern_BM(pOnepattern1, &finalPack, i)){
             //         output_alert(pOnepattern1, &finalPack, header);
@@ -686,8 +733,8 @@ void pcap_callback(u_char *user, const struct pcap_pkthdr *header, const u_char 
             // if(pOnepattern2 != NULL){
             //     int match2=matchpattern_AC(pattern_len2, &finalPack, header);
             // }
-            if(finalPack.packetcontent) free(finalPack.packetcontent);
-            finalPack.packetcontent = NULL;
+            // if(finalPack.packetcontent) free(finalPack.packetcontent);
+            // finalPack.packetcontent = NULL;
         } else {
             printf("\033[1;34m");
             printf("\nDetected New Fragment，ID = %d\n\n", onepacket.id);
@@ -711,6 +758,7 @@ int main(int argc,char *argv[])
             printf("Type in 0/1/2 to choose your IDS database:\n");
             printf("\033[1;34m");
 			printf("0:Default Rulebase\n1:add your own rules\n2:use only your rules\n");
+            
             printf("\033[0m");
 			scanf("%d",&mode);
 		}
@@ -854,7 +902,16 @@ int main(int argc,char *argv[])
 			pOnepattern = pOnepattern->next;
 			i++;
 		}
-	}	
+    }
+
+    printf("\033[1;33m");
+	printf("Please choose the String Matching Algorithm\n1 for Brute Force, 2 for Boyer-Moore, 3 for AC Automation:\n");
+    printf("\033[0m");
+
+    scanf("%c",&c);
+    scanf("%c",&c);
+    
+
     printf("\033[1;34m");
  	printf("Start to detect intrusion........\n");  //此函数设置过滤器并开始进行数据包的捕捉
     printf("\033[0m");
