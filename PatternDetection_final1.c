@@ -72,7 +72,7 @@ typedef struct AttackPattern2{
 	int patternlen;
 	char src[10];
 	char des[10];
-	struct AttackPattern *next;
+	struct AttackPattern2 *next;
 }ATTACKPATTERN2;
 
 ATTACKPATTERN* pPatternHeader;//全局变量，保存攻击模式链表头
