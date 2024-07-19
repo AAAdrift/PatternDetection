@@ -1,0 +1,209 @@
+#include <fstream>
+#include <functional>
+#include <utility>
+#include <thread>
+#include <mutex>
+
+using namespace std;
+#include "task_manager.h"
+
+map<ll, task> list, cls[9];
+string id_present;
+mutex mtx;  // 创建一个互斥锁
+void add();
+void dele();
+void inquiry(string s);
+void read();
+void write();
+void win(string s);
+
+
+void showbegin()
+{
+    cout << "Welcome to task manager!" << endl;
+    cout << "log in/sign up ?" << endl;
+}
+
+void sign_up()
+{
+    id, password;
+    cout << "Please input your id:" << endl;
+
+    fstream fo;
+    bool flag = false;
+    while(true)
+    {
+        cin >> id;
+        flag = false;
+        fo.open("users.txt", ios::in);
+        while(!flag && !fo.eof())
+        {
+            string tmp_id;
+            size_t tmp_word;
+            fo >> tmp_id >> tmp_word;
+            if(id == tmp_id) flag = true;
+        }
+        fo.close();
+        if(flag)
+        {
+            cout << "This id has been used, please input another!" << endl;
+            cout << "if you want to log in, please input \"quit\"" << endl;
+            string tmp;
+            cin >> tmp;
+            if(tmp == "quit") return;
+        }
+        else break;
+    }
+
+    fo.open("users.txt", ios::task_master);
+    fo << id << " ";
+
+    cout << "Succeed!" << endl;
+    cout << "Now, please input your password" << endl;
+    cin >> password;
+
+    hash<string> change;
+    size_t word = change(password);
+    fo << word << endl;
+    fo.close();
+    cout << "Succeed!" << endl;
+}
+
+bool check(string id)
+{
+    fstream fi;
+    bool flag = false;
+    fi.open("users.txt", ios::in);
+    while(!flag && !fi.eof())
+    {
+        string tmp_id;
+        size_t tmp_word;
+        fi >> tmp_id >> tmp_word;
+        if(id == tmp_id) flag = true;
+    }
+    fi.close();
+    return flag;
+}
+
+bool log_in(string id, string password)
+{
+    fstream fi;
+    fi.open("users.txt", ios::in);
+    hash<string> change;
+    size_t word = change(password);
+    map<string, size_t> info;
+    //int n = 0;
+    while(!fi.eof())
+    {
+        string tmp_id;
+        size_t tmp_word;
+        fi >> tmp_id >> tmp_word;
+        info.insert(make_pair(tmp_id, tmp_word));
+    }
+    //cout << n << endl;
+    map<string, size_t>::iterator it = info.find(id);
+    if(word != it -> second)
+    {
+        return false;
+    }
+    fi.close();
+    cout << "Succeed!" << endl;
+    return true;
+}
+
+void thrd1() {
+    while(1) {
+        //注册与登录
+        showbegin();
+        string cmd;
+        bool flag = false;
+        string password;
+
+        while(true) {
+            getline(cin, cmd);
+            if(cmd == "sign up") {
+                sign_up();
+                cout << "If you want to log in, please input \"log in\" " << endl;
+            }   
+            if(cmd == "log in") {
+                cout << "Please input your id" << endl;
+                cin >> id_present;
+                while(!check(id_present)) {
+                    cout << "ERROR, please check your input!" << endl;
+                    cout << "you can input id again or input \"sign up\" to sign up a account" << endl;
+                    string tmp_cmd;
+                    cin.ignore(1024, '\n');//添加的
+                    getline(cin, tmp_cmd);//原本的cin改为getline
+                    if(tmp_cmd == "sign up")
+                    {
+                        sign_up();
+                    }
+                    else id_present = tmp_cmd;
+                }
+                cout << "Please input the password" << endl;
+                cin     >> password;
+                while(!log_in(id_present, password)) {
+                    cout << "ERROR, please check your input" << endl;
+                    cout << "Please input the password again" << endl;
+                    cin >> password;
+                }
+                break;
+            }
+        }
+        cout << "loading..." << endl;
+        read();
+        cout << "finished." << endl;
+
+        //登录后开始操作
+        while(true) {
+            cin.ignore(1024, '\n');
+            printf("Please input your commands:\n");
+            string s;
+            getline(cin, s);
+            if(!strcasecmp(s.substr(0, 7).c_str(), "addTask")) {
+                add();
+            }else if (!strcasecmp(s.substr(0, 7).c_str(), "delTask")) {
+                dele();
+            }else if (!strcasecmp(s.substr(0, 7).c_str(), "inquiry")) {
+                inquiry(s);
+            }else if (!strcasecmp(s.substr(0, 7).c_str(), "log out")) {
+                printf("Are you sure to log out: y / n ?\n");
+                char ch;
+                cin >> ch;
+                if(ch == 'y') {
+                    list.clear();
+                    for(int i = 0; i < 8; ++ i) {
+                        cls[i].clear();
+                    }
+                    printf("You have logged out.\n");
+                }
+                break;
+            }else printf("Invalid command!\n");
+        }
+    }
+}
+
+void thrd2() {
+    cout << "hello" << endl;
+}
+
+int main(int argc, char*argv[]) {
+
+    if(argc == 2 && strcmp(argv[1], "-h")) {
+        cout << "HELP" << endl;
+        return 0;
+    }
+    else if(argc == 2 && strcmp(argv[1], "run")) {
+    std::thread thread1(thrd1);
+    std::thread thread2(thrd2);
+
+    // 主线程等待子线程完成
+    thread1.join();
+    thread2.join();
+    
+    return 0;
+    }
+    else if() {
+
+    }
+}
