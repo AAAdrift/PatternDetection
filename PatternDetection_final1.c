@@ -89,7 +89,7 @@ int choose_alg;
 
 // 重组数据包
 int reassemble_packet(POnepOnepacket *pkt, u_int16_t id) {
-    printf("Reassembling...\n");
+    // printf("Reassembling...\n");
     int total_length = 0;
     char *content = NULL;
 	if(frag_num == 0) return 0;
@@ -131,8 +131,6 @@ int reassemble_packet(POnepOnepacket *pkt, u_int16_t id) {
     strcpy(pkt->packetcontent, content);
 	
     frag_num = 0;
-    if(content) free(content);
-    content = NULL;
     
 	return 1;
 }
@@ -174,7 +172,8 @@ int readpattern(char *patternfile){
 		pchar ++;
 		memcpy(pOnepattern->attackdes, linebuffer, deslen);
 		memcpy(pOnepattern->patterncontent, pchar, pOnepattern->patternlen);
-		memcpy(pOnepattern->src, )
+		memcpy(pOnepattern->src, "any", 3);
+		memcpy(pOnepattern->des, "any", 3);
 		if (pOnepattern->patternlen < minpattern_len)
 			minpattern_len = pOnepattern->patternlen;
 		pOnepattern->next = NULL;
@@ -187,6 +186,7 @@ int readpattern(char *patternfile){
 		}
 		bzero(linebuffer,256);
 	}
+	
 	if (pPatternHeader == NULL) 
 		return 1;
 	return 0;
@@ -354,8 +354,8 @@ int badChar(char badChr,int badCharIndex,int modelStrIndex[],int modelStrLen) {
 
 int matchpattern_BM(ATTACKPATTERN *pOnepattern, PACKETINFO2 *pOnepacket, int i){
 	//printf("%s\n",pOnepacket -> packetcontent);
-    printf("匹配中...");
-    printf("待匹配内容为\n%s\n", pOnepacket -> packetcontent);
+    // printf("匹配中...");
+    // printf("待匹配内容为\n%s\n", pOnepacket -> packetcontent);
 	int *patternIndex = modelStrIndex[i];
 	int m = pOnepattern->patternlen;
 	char *leftcontent = pOnepacket -> packetcontent;
@@ -510,7 +510,7 @@ void output_alert_0(ATTACKPATTERN *pOnepattern,POnepOnepacket *pOnepacket,const 
     fprintf(logFile, "%u.%u.%u.%u ==> ", pOnepacket->src_ip[0], pOnepacket->src_ip[1], pOnepacket->src_ip[2], pOnepacket->src_ip[3]);
     fprintf(logFile, "%u.%u.%u.%u\n", pOnepacket->dest_ip[0], pOnepacket->dest_ip[1], pOnepacket->dest_ip[2], pOnepacket->dest_ip[3]);
   	fprintf(logFile, "%s\n\n",pOnepacket->packetcontent);
-	printf("\033[1;34m");
+	printf("\033[1;33m");
     printf("Intrusion Detected:\n     Type:  %s   ", pOnepattern->attackdes);
   	printf("%d.%d.%d.%d ==> ",pOnepacket->src_ip[0],pOnepacket->src_ip[1],pOnepacket->src_ip[2],pOnepacket->src_ip[3]);
   	printf("%d.%d.%d.%d\n",pOnepacket->dest_ip[0],pOnepacket->dest_ip[1],pOnepacket->dest_ip[2],pOnepacket->dest_ip[3]);
@@ -539,7 +539,7 @@ void output_alert_2(ATTACKPATTERN *pOnepattern,PACKETINFO2 *pOnepacket,const str
     fprintf(logFile, "%u.%u.%u.%u\n", pOnepacket->dest_ip[0], pOnepacket->dest_ip[1], pOnepacket->dest_ip[2], pOnepacket->dest_ip[3]);
   	fprintf(logFile, "%s\n\n",pOnepacket->packetcontent);
     printf("\033[33m");
-	printf("发现特征串攻击:\n     攻击类型  %s   ", pOnepattern->attackdes);
+	printf("Intrusion Detected:\n     Type:  %s   ", pOnepattern->attackdes);
   	printf("%d.%d.%d.%d ==> ",pOnepacket->src_ip[0],pOnepacket->src_ip[1],pOnepacket->src_ip[2],pOnepacket->src_ip[3]);
   	printf("%d.%d.%d.%d\n",pOnepacket->dest_ip[0],pOnepacket->dest_ip[1],pOnepacket->dest_ip[2],pOnepacket->dest_ip[3]);
     printf("\033[0m");
@@ -595,11 +595,8 @@ void pcap_callback(u_char *user, const struct pcap_pkthdr *header, const u_char 
         if(onepacket.is_last_frag) {
             POnepOnepacket finalPack;
             if(!reassemble_packet(&finalPack, onepacket.id)) return;
-            printf("已完成TCP报文重组。结果为:\n");
-            printf("%s\n\n", finalPack.packetcontent);
-
-            //解码
-            //decode_base64_escape(&finalPack);
+            // printf("已完成TCP报文重组。结果为:\n");
+            // printf("%s\n\n", finalPack.packetcontent);
 
 			if(choose_alg == 1) {
 				//暴力匹配
@@ -622,7 +619,6 @@ void pcap_callback(u_char *user, const struct pcap_pkthdr *header, const u_char 
 				
 				ATTACKPATTERN *pOnepattern1 = pPatternHeader;
 				int i=0;
-				printf("开始BM算法匹配\n");
 				while(pOnepattern1 != NULL){
 					if (matchpattern_BM(pOnepattern1, &finalPack, i)){
 						output_alert_0(pOnepattern1, &finalPack, header);
@@ -824,9 +820,6 @@ int main(int argc,char *argv[])
 
     scanf("%c",&c);
     scanf("%d",&choose_alg);
-    if(choose_alg == 1) printf("选择暴力匹配\n");
-    else if (choose_alg == 2) printf("选择BM匹配算法\n");
-    else printf("选择AC自动机算法\n");
     
 
     printf("\033[1;34m");
