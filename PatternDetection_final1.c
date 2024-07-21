@@ -59,25 +59,18 @@ typedef struct Packetinfo2{
 POnepOnepacket packets[MAX_FRAG];
 int frag_num = 0;
 
-typedef struct AttackPattern{
-	char attackdes[256];
-	char patterncontent[5000];
-	int patternlen;
-	struct AttackPattern *next;
-}ATTACKPATTERN;
 
-typedef struct AttackPattern2{
+typedef struct ATTACKPATTERN{
 	char attackdes[256];
 	char patterncontent[5000];
 	int patternlen;
 	char src[10];
 	char des[10];
-	struct AttackPattern2 *next;
-}ATTACKPATTERN2;
+	struct ATTACKPATTERN *next;
+}ATTACKPATTERN;
 
 ATTACKPATTERN* pPatternHeader;//全局变量，保存攻击模式链表头
 int minpattern_len;    //最短模式的长度
-ATTACKPATTERN2* pPatternHeader2;//全局变量，保存攻击模式链表头
 int minpattern_len2;    //最短模式的长度
 
 pcap_t *phandle;
@@ -92,46 +85,7 @@ void acsm_free(acsm_context_t *ctx);
 int acsm_add_pattern(acsm_context_t *ctx, u_char *string, size_t len, int pattern_id); 
 int acsm_compile(acsm_context_t *ctx);
 match_result_t acsm_search(acsm_context_t *ctx, u_char *string, size_t len);
-
-// 解码Base64编码的逃逸攻击数据
-/*void decode_base64_escape(POnepOnepacket *pkt) {
-    if (pkt->packetcontent == NULL || pkt->contentlen <= 0) {
-        fprintf(stderr, "Invalid packet data or length.\n");
-        return;
-    }
-
-    // 创建一个足够大的缓冲区用于存放解码后的数据
-    size_t decoded_len = base64_decodestring_len((const unsigned char*)pkt->packetcontent, pkt->contentlen);
-    unsigned char *decoded_data = (unsigned char*)malloc(decoded_len + 1); // +1 for null terminator
-    if (decoded_data == NULL) {
-        fprintf(stderr, "Memory allocation failed.\n");
-        return;
-    }
-
-    // 尝试解码数据
-    size_t decoded_size;
-    if (base64_decode(decoded_data, &decoded_size, (const unsigned char*)pkt->packetcontent, pkt->contentlen) != 0) {
-        fprintf(stderr, "Failed to decode Base64 data.\n");
-        free(decoded_data);
-        decoded_data = NULL;
-        return;
-    }
-
-    // 解码成功，现在可以处理decoded_data中的数据
-    // 注意：在实际应用中，你可能需要根据解码后的数据内容进行进一步的分析或处理
-    printf("Decoded data: ");
-    for (size_t i = 0; i < decoded_size; ++i) {
-        printf("%02X ", decoded_data[i]);
-    }
-    printf("\n");
-
-    //存储
-    strcpy(pkt->packetcontent, decoded_data);
-
-    // 清理分配的内存
-    free(decoded_data);
-    decode_data = NULL;
-}*/
+int choose_alg;
 
 // 重组数据包
 int reassemble_packet(POnepOnepacket *pkt, u_int16_t id) {
@@ -220,6 +174,7 @@ int readpattern(char *patternfile){
 		pchar ++;
 		memcpy(pOnepattern->attackdes, linebuffer, deslen);
 		memcpy(pOnepattern->patterncontent, pchar, pOnepattern->patternlen);
+		memcpy(pOnepattern->src, )
 		if (pOnepattern->patternlen < minpattern_len)
 			minpattern_len = pOnepattern->patternlen;
 		pOnepattern->next = NULL;
@@ -237,50 +192,6 @@ int readpattern(char *patternfile){
 	return 0;
 }
 
-int readpattern2(char *patternfile){
-	FILE *file;
-	char linebuffer[256];
-
-	file = fopen(patternfile,"r");
-	if ( file == NULL) {
-		printf("Cann't open the pattern file! Please check it and try again! \n");
-		return 1;
-	}
-	bzero(linebuffer,256);
-	pPatternHeader2 = NULL;
-	minpattern_len2 = 1000;
-
-	while(fgets(linebuffer,255,file)){
-		ATTACKPATTERN *pOnepattern;
-		int deslen;
-		char *pchar;
-		pchar = strchr(linebuffer,'#');
-		if (pchar == NULL)
-			continue;
-		pOnepattern = malloc(sizeof(ATTACKPATTERN) + 1);
-		deslen = pchar - linebuffer;
-		pOnepattern->patternlen = strlen(linebuffer) - deslen -1 -1;
-		pchar ++;
-		memcpy(pOnepattern->attackdes, linebuffer, deslen);
-		memcpy(pOnepattern->patterncontent, pchar, pOnepattern->patternlen);
-		if (pOnepattern->patternlen < minpattern_len2)
-			minpattern_len2 = pOnepattern->patternlen;
-		pOnepattern->next = NULL;
-
-		if (pPatternHeader2 == NULL)
-			pPatternHeader2 = pOnepattern;
-		else{
-			pOnepattern->next = pPatternHeader2;
-			pPatternHeader2 = pOnepattern;
-		}
-		bzero(linebuffer,256);
-	}
-	if (pPatternHeader2 == NULL) 
-		return 1;
-	return 0;
-}
-
-
 int readpattern_sql(){
 	MYSQL *conn;
     MYSQL_RES *res;
@@ -292,7 +203,7 @@ int readpattern_sql(){
 
     conn = mysql_init(NULL);
 
-	pPatternHeader2 = NULL;
+	pPatternHeader = NULL;
 	minpattern_len2 = 1000;
 	
     // 连接到 MySQL
@@ -316,8 +227,8 @@ int readpattern_sql(){
 
     // 打印查询结果
     while ((row = mysql_fetch_row(res)) != NULL) {
-		ATTACKPATTERN2 *pOnepattern;
-		pOnepattern = malloc(sizeof(ATTACKPATTERN2) + 1);
+		ATTACKPATTERN *pOnepattern;
+		pOnepattern = malloc(sizeof(ATTACKPATTERN) + 1);
 
 		pOnepattern->patternlen=strlen(row[1]);
 		memcpy(pOnepattern->attackdes, row[0], strlen(row[0]));
@@ -330,18 +241,18 @@ int readpattern_sql(){
 			minpattern_len2 = pOnepattern->patternlen;
 		pOnepattern->next = NULL;
 
-		if (pPatternHeader2 == NULL)
-			pPatternHeader2 = pOnepattern;
+		if (pPatternHeader == NULL)
+			pPatternHeader = pOnepattern;
 		else{
-			pOnepattern->next = pPatternHeader2;
-			pPatternHeader2 = pOnepattern;
+			pOnepattern->next = pPatternHeader;
+			pPatternHeader = pOnepattern;
 		}
 	}
 
     // 清理
     mysql_free_result(res);
     mysql_close(conn);
-	if (pPatternHeader2 == NULL) 
+	if (pPatternHeader == NULL) 
 		return 1;
 
     return 0;
@@ -488,25 +399,26 @@ int matchpattern_BM(ATTACKPATTERN *pOnepattern, PACKETINFO2 *pOnepacket, int i){
 
 }
 
-int matchpattern_AC(int pattern_len, PACKETINFO2 *pOnepacket, const struct pcap_pkthdr *header){
-	ATTACKPATTERN2 *pOnepattern2 = pPatternHeader2;
+int matchpattern_AC(int pattern_len, POnepOnepacket *pOnepacket, const struct pcap_pkthdr *header){
+	ATTACKPATTERN *pOnepattern = pPatternHeader;
 	char *text = pOnepacket -> packetcontent; 
 	char text_len = pOnepacket ->contentlen;
+	// printf("正在匹配：%s\n", text);
 	match_result_t matches = acsm_search(ctx, (u_char *)text, acsm_strlen(text));
 	int match_full = matches.count;
     if (matches.count > 0) {
 		for (size_t i = 0; i < matches.count; ++i) {
             int count = matches.patterns[i];
-			pOnepattern2 = pPatternHeader2;
-			while(pOnepattern2 != NULL && count!=0){
-			pOnepattern2 = pOnepattern2->next;
-			count--;
+			pOnepattern = pPatternHeader;
+			while(pOnepattern != NULL && count!=0){
+				pOnepattern = pOnepattern->next;
+				count--;
 			}
-			int max_len=max(strlen(pOnepattern2->src),strlen(pOnepacket->src));
+			int max_len=max(strlen(pOnepattern->src),strlen(pOnepacket->src));
 			//添加对端口的判断
-			if(((strncmp(pOnepattern2->src,"any",3)==0)||(strncmp(pOnepattern2->src,pOnepacket->src,max_len)==0))&&((strncmp(pOnepattern2->des,"any",3)==0)||(strncmp(pOnepattern2->des,pOnepacket->des,max_len)==0)))
+			if(((strncmp(pOnepattern->src,"any",3)==0)||(strncmp(pOnepattern->src,pOnepacket->src,max_len)==0))&&((strncmp(pOnepattern->des,"any",3)==0)||(strncmp(pOnepattern->des,pOnepacket->des,max_len)==0)))
 			{
-				output_alert_2(pOnepattern2, pOnepacket,header);
+				output_alert_2(pOnepattern, pOnepacket,header);
 			}
 			else {
 				match_full--;
@@ -579,7 +491,7 @@ int getGsMove(int suffix[], bool prefix[], int index, int size)
 
 }
 
-void output_alert(ATTACKPATTERN *pOnepattern,PACKETINFO2 *pOnepacket,const struct pcap_pkthdr *header)
+void output_alert_0(ATTACKPATTERN *pOnepattern,POnepOnepacket *pOnepacket,const struct pcap_pkthdr *header)
 {
 	// 日志文件路径
     const char *logFilePath = "attack_log.txt";
@@ -608,7 +520,7 @@ void output_alert(ATTACKPATTERN *pOnepattern,PACKETINFO2 *pOnepacket,const struc
     fclose(logFile);
 }
 
-void output_alert_2(ATTACKPATTERN2 *pOnepattern,PACKETINFO2 *pOnepacket,const struct pcap_pkthdr *header)
+void output_alert_2(ATTACKPATTERN *pOnepattern,PACKETINFO2 *pOnepacket,const struct pcap_pkthdr *header)
 {
 	// 日志文件路径
     const char *logFilePath = "attack_log.txt";
@@ -689,54 +601,54 @@ void pcap_callback(u_char *user, const struct pcap_pkthdr *header, const u_char 
             //解码
             //decode_base64_escape(&finalPack);
 
-            //暴力匹配
-            ATTACKPATTERN *pOnepattern = pPatternHeader;
-            while(pOnepattern != NULL){
-                if (matchpattern(pOnepattern, &finalPack)){
-                    output_alert(pOnepattern, &finalPack, header);
-                    
-                }
-                pOnepattern = pOnepattern->next;
-            }
+			if(choose_alg == 1) {
+				//暴力匹配
+				ATTACKPATTERN *pOnepattern = pPatternHeader;
+				while(pOnepattern != NULL){
+					if (matchpattern(pOnepattern, &finalPack)){
+						output_alert_0(pOnepattern, &finalPack, header);
+						
+					}
+					pOnepattern = pOnepattern->next;
+				}
+			} else if(choose_alg == 2) {
+				// BM算法匹配
+				struct ip * ip_header2=(struct ip *)(pkt_data+14);
 
-            //BM算法匹配
-            // struct ip * ip_header2=(struct ip *)(pkt_data+14);
+				struct tcphdr *tcp_header = (struct tcphdr *)(pkt_data + 14 + (ip_header2->ip_hl * 4));
+				sprintf(finalPack.src, "%d", ntohs(tcp_header->th_sport));
+				sprintf(finalPack.des, "%d", ntohs(tcp_header->th_dport));
+				
+				
+				ATTACKPATTERN *pOnepattern1 = pPatternHeader;
+				int i=0;
+				printf("开始BM算法匹配\n");
+				while(pOnepattern1 != NULL){
+					if (matchpattern_BM(pOnepattern1, &finalPack, i)){
+						output_alert_0(pOnepattern1, &finalPack, header);
+						//printf("%s\n",onepacket.packetcontent);
+					}
+					pOnepattern1 = pOnepattern1->next;
+					i++;
+				}
+			} else {
+				// AC自动机
+				struct ip * ip_header2=(struct ip *)(pkt_data+14);
 
-            // struct tcphdr *tcp_header = (struct tcphdr *)(pkt_data + 14 + (ip_header2->ip_hl * 4));
-            // sprintf(finalPack.src, "%d", ntohs(tcp_header->th_sport));
-            // sprintf(finalPack.des, "%d", ntohs(tcp_header->th_dport));
-            
-            
-            // ATTACKPATTERN *pOnepattern1 = pPatternHeader;
-            // int i=0;
-            // printf("开始BM算法匹配\n");
-            // while(pOnepattern1 != NULL){
-            //     if (matchpattern_BM(pOnepattern1, &finalPack, i)){
-            //         output_alert(pOnepattern1, &finalPack, header);
-            //         //printf("%s\n",onepacket.packetcontent);
-            //     }
-            //     pOnepattern1 = pOnepattern1->next;
-            //     i++;
-            // }
-
-            //AC自动机
-            // struct ip * ip_header2=(struct ip *)(pkt_data+14);
-
-            // struct tcphdr *tcp_header = (struct tcphdr *)(pkt_data + 14 + (ip_header2->ip_hl * 4));
-            // sprintf(finalPack.src, "%d", ntohs(tcp_header->th_sport));
-            // sprintf(finalPack.des, "%d", ntohs(tcp_header->th_dport));
-            // ATTACKPATTERN2 *pOnepattern2 = pPatternHeader2;
-            // int pattern_len2 = 0;
-            // while(pOnepattern2 != NULL){
-            //     pattern_len2++;
-            //     pOnepattern2 = pOnepattern2->next;
-            // }
-            // pOnepattern2 = pPatternHeader2;
-            // if(pOnepattern2 != NULL){
-            //     int match2=matchpattern_AC(pattern_len2, &finalPack, header);
-            // }
-            // if(finalPack.packetcontent) free(finalPack.packetcontent);
-            // finalPack.packetcontent = NULL;
+				struct tcphdr *tcp_header = (struct tcphdr *)(pkt_data + 14 + (ip_header2->ip_hl * 4));
+				sprintf(finalPack.src, "%d", ntohs(tcp_header->th_sport));
+				sprintf(finalPack.des, "%d", ntohs(tcp_header->th_dport));
+				ATTACKPATTERN *pOnepattern = pPatternHeader;
+				int pattern_len2 = 0;
+				while(pOnepattern != NULL){
+					pattern_len2++;
+					pOnepattern = pOnepattern->next;
+				}
+				pOnepattern = pPatternHeader;
+				if(pOnepattern != NULL){
+					int match2=matchpattern_AC(pattern_len2, &finalPack, header);
+				}
+			}
         } else {
             printf("\033[1;34m");
             printf("\nDetected New Fragment，ID = %d\n\n", onepacket.id);
@@ -772,6 +684,7 @@ int main(int argc,char *argv[])
   	bpf_u_int32 ipaddress, ipmask;
   	struct bpf_program fcode;
 
+// 读取模式串
     char patternfile[256];  //保存攻击模式文件名
 	if(mode==1||mode==2){
         printf("\033[1;33m");
@@ -782,39 +695,38 @@ int main(int argc,char *argv[])
 			exit(0);
 	}
 
-	//if (readpattern2(patternfile2))
-	//	exit(0);
 	if(mode==1||mode==0){
 		if (readpattern_sql()) exit(0);
-
-		ATTACKPATTERN2 *pOnepattern2 = pPatternHeader2;
-		
-		ctx = acsm_alloc(0);
-		if (ctx == NULL) {
-			fprintf(stderr, "acsm_alloc() error.\n");
-			return -1;
-		}
-		int pattern_id = 0; // 初始化模式串序号
-	
-		while(pOnepattern2 != NULL) {
-			if (acsm_add_pattern(ctx, (u_char *)(pOnepattern2 ->patterncontent), acsm_strlen((u_char *)(pOnepattern2 ->patterncontent)), pattern_id) != 0) {
-				fprintf(stderr, "acsm_add_pattern() with pattern \"%s\" error.\n", 
-						(u_char *)(pOnepattern2 ->patterncontent));
-				return -1;
-			}
-
-			pOnepattern2 = pOnepattern2->next;
-			pattern_id++;
-		}
-
-		debug_printf("after add_pattern: max_state=%d\n", ctx->max_state);
-		if (acsm_compile(ctx) != 0) {
-			fprintf(stderr, "acsm_compile() error.\n");
-			return -1;
-		}    
 	}
-    
+		
+	ATTACKPATTERN *pOnepattern = pPatternHeader;
+	
+	ctx = acsm_alloc(0);
+	if (ctx == NULL) {
+		fprintf(stderr, "acsm_alloc() error.\n");
+		return -1;
+	}
+	int pattern_id = 0; // 初始化模式串序号
 
+	while(pOnepattern != NULL) {
+		if (acsm_add_pattern(ctx, (u_char *)(pOnepattern ->patterncontent), acsm_strlen((u_char *)(pOnepattern ->patterncontent)), pattern_id) != 0) {
+			fprintf(stderr, "acsm_add_pattern() with pattern \"%s\" error.\n", 
+					(u_char *)(pOnepattern ->patterncontent));
+			return -1;
+		}
+
+		pOnepattern = pOnepattern->next;
+		pattern_id++;
+	}
+
+	debug_printf("after add_pattern: max_state=%d\n", ctx->max_state);
+	if (acsm_compile(ctx) != 0) {
+		fprintf(stderr, "acsm_compile() error.\n");
+		return -1;
+	}    
+	
+
+// 初始化设备
   	if((device = pcap_lookupdev(errbuf)) == NULL) exit(0);                 //获得可用的网络设备名.
 	if(pcap_lookupnet(device,&ipaddress,&ipmask,errbuf)==-1)    //获得ip和子网掩码
    	exit(0);
@@ -911,9 +823,9 @@ int main(int argc,char *argv[])
     printf("\033[0m");
 
     scanf("%c",&c);
-    scanf("%c",&c);
-    if(c == "1") printf("选择暴力匹配\n");
-    else if (c == "2") printf("选择BM匹配算法\n");
+    scanf("%d",&choose_alg);
+    if(choose_alg == 1) printf("选择暴力匹配\n");
+    else if (choose_alg == 2) printf("选择BM匹配算法\n");
     else printf("选择AC自动机算法\n");
     
 
