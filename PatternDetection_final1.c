@@ -15,7 +15,7 @@
 #include "acsm.h"
 #include <sys/time.h>
 #include <mysql/mysql.h>
-// #include <base64.h>
+#include <limits.h>
 
 typedef struct { //ip头格式
 	u_char version:4;
@@ -87,16 +87,53 @@ int acsm_compile(acsm_context_t *ctx);
 match_result_t acsm_search(acsm_context_t *ctx, u_char *string, size_t len);
 int choose_alg;
 
+bool cvt_path(char *src, char *dest) {
+	char *pos = strchr(src, '/');
+	if(pos == NULL) return false;
+	
+}
+int hex_char_to_int(char c) {
+	if (c >= '0' && c <=  '9') return c - '0';
+	if (c >= 'a' && c <= 'f') return c -'a' + 10;
+	if (c >= 'A' && c <= 'F') return c - 'A' + 10;
+}
+char *url_decode(char *src_string) {
+	if(strlen(src_string) < 3) return src_string;
+	
+	char *ret = (char *)malloc(strlen(src_string) + 1);
+	char *j = ret;
+	for(int i = 0; i < (strlen(src_string) - 2); ++i) {
+		if(src_string[i] == '%') {
+			*j = (char)((hex_char_to_int(src_string[i + 1]) << 4) | hex_char_to_int(src_string[i + 2]));
+			j++;
+			i += 2;
+		} else {
+			*j = src_string[i];
+			j++;
+		}
+	}
+	// printf("ret = %s\n", ret);
+	for(int i = strlen(src_string) - 2; i < strlen(src_string); ++i) {
+		*j = src_string[i];
+		j++;
+	}
+	// printf("\n原始长度为：%d\n现在长度为:%d\n\n", strlen(src_string), j - ret);
+	*j = '\0';
+	// printf("现在长度为：%d\n",strlen(ret));
+	// printf("\n解码结果：\n%s\n\n",ret);
+	return ret;
+}
 // 重组数据包
 int reassemble_packet(POnepOnepacket *pkt, u_int16_t id) {
     // printf("Reassembling...\n");
     int total_length = 0;
     char *content = NULL;
-	if(frag_num == 0) return 0;
     // 找到所有ID匹配的分片并重组
-    for (size_t i = 0; i < frag_num; ++i) {
+    for (size_t i = 0; i <= frag_num; ++i) {
         if (packets[i].id == id && packets[i].packetcontent != NULL) {
 			// printf("Matched!\n");
+			// printf("新增长度为%d\n内容为%s\n", strlen(packets[i].packetcontent), packets[i].packetcontent);
+
             total_length += strlen(packets[i].packetcontent);
             // 填充POnepOnepacket结构体
 			for(int j = 0; j <= 3; ++ j) {
@@ -107,29 +144,27 @@ int reassemble_packet(POnepOnepacket *pkt, u_int16_t id) {
         // pkt->dest_ip[0], pkt->dest_ip[1], pkt->dest_ip[2], pkt->dest_ip[3]);
         }
     }
-    // printf("总长度 = %d\n", total_length);
     
 	if(total_length <= 0) return 0;
-    content = (char *)malloc(total_length + 1);
+    content = malloc(total_length + 1);
+	
     if (content == NULL) {
         printf("Memory allocation failed\n");
         return 0;
     }
-    total_length = 0;
-
-    for (size_t i = 0; i < frag_num; ++i) {
-        
-        if (packets[i].id == id) {
-			strcat(content, packets[i].packetcontent);
+	char *j = content;
+    for (size_t i = 0; i <= frag_num; ++i) {
+        if (packets[i].id == id && packets[i].packetcontent != NULL) {
+			memcpy(j, packets[i].packetcontent, strlen(packets[i].packetcontent));
+			j +=  strlen(packets[i].packetcontent);
+			// printf("i = %d, Yes\n", i);
             // memcpy(content + total_length, packets[i].packetcontent, strlen(packets[i].packetcontent));
-            total_length += strlen(packets[i].packetcontent);
         }
     }
     pkt->totallen = total_length;
-    pkt->packetcontent = malloc(total_length + 1);
     pkt->contentlen = strlen(content);
-    strcpy(pkt->packetcontent, content);
-	
+	pkt->packetcontent = malloc(strlen(content) + 1);
+    memcpy(pkt->packetcontent, content, strlen(content));
     frag_num = 0;
     
 	return 1;
@@ -166,7 +201,7 @@ int readpattern(char *patternfile){
 		pchar = strchr(linebuffer,'#');
 		if (pchar == NULL)
 			continue;
-		pOnepattern = malloc(sizeof(ATTACKPATTERN) + 1);
+		pOnepattern = (ATTACKPATTERN *)malloc(sizeof(ATTACKPATTERN) + 1);
 		deslen = pchar - linebuffer;
 		pOnepattern->patternlen = strlen(linebuffer) - deslen -1 -1 ;
 		pchar ++;
@@ -185,6 +220,13 @@ int readpattern(char *patternfile){
 			pPatternHeader = pOnepattern;
 		}
 		bzero(linebuffer,256);
+		
+		//进行解码
+		char *decoded_content = url_decode(pOnepattern->patterncontent);
+		memcpy(pOnepattern->patterncontent, decoded_content, strlen(decoded_content));
+		pOnepattern->patterncontent[strlen(decoded_content)] = '\0';
+		printf("特征串的解码结果为：%s\n", pOnepattern->patterncontent);
+		pOnepattern->patternlen = strlen(pOnepattern->patterncontent);
 	}
 	
 	if (pPatternHeader == NULL) 
@@ -228,7 +270,7 @@ int readpattern_sql(){
     // 打印查询结果
     while ((row = mysql_fetch_row(res)) != NULL) {
 		ATTACKPATTERN *pOnepattern;
-		pOnepattern = malloc(sizeof(ATTACKPATTERN) + 1);
+		pOnepattern = (ATTACKPATTERN *)malloc(sizeof(ATTACKPATTERN) + 1);
 
 		pOnepattern->patternlen=strlen(row[1]);
 		memcpy(pOnepattern->attackdes, row[0], strlen(row[0]));
@@ -266,6 +308,7 @@ int max(int a, int b) {
 int matchpattern(ATTACKPATTERN *pOnepattern, POnepOnepacket *pOnepacket){
 	// printf("匹配中...");
     // printf("待匹配内容：\n%s\n", pOnepacket->packetcontent);
+	// printf("特征串%s\n", pOnepattern->patterncontent);
 	int leftlen;
 	char *leftcontent;
 	
@@ -563,40 +606,45 @@ void help()
 void pcap_callback(u_char *user, const struct pcap_pkthdr *header, const u_char *pkt_data) {
     
     IPHEADER *ip_header;
-	POnepOnepacket onepacket;
+	// POnepOnepacket onepacket;
 	ATTACKPATTERN *pOnepattern;
-  	bzero(&onepacket,sizeof(POnepOnepacket));
+  	bzero(&packets[frag_num],sizeof(POnepOnepacket));
 
   	if(header->len >= 14)
     	ip_header=(IPHEADER*)(pkt_data+14);
 	else 
 		return;
   	if(ip_header->proto == 6){
-
-        onepacket.totallen = ip_header->total_len;
-		onepacket.contentlen = ip_header->total_len - 20 - 20;
-		if (onepacket.contentlen < minpattern_len)
+		
+        packets[frag_num].totallen = ip_header->total_len;
+		packets[frag_num].contentlen = ip_header->total_len - 20 - 20;
+		if (packets[frag_num].contentlen < minpattern_len)
 			return;
-        onepacket.packetcontent = (char *)(pkt_data + 14 + 20 + 20);
+        packets[frag_num].packetcontent = (char *)(pkt_data + 14 + 20 + 20);
         
-   		strncpy(onepacket.src_ip,ip_header->sourceIP,4);
-    	strncpy(onepacket.dest_ip,ip_header->destIP,4);
+   		strncpy(packets[frag_num].src_ip,ip_header->sourceIP,4);
+    	strncpy(packets[frag_num].dest_ip,ip_header->destIP,4);
         
-        onepacket.offset = ip_header->flags & 0x20;
-        onepacket.is_last_frag = (onepacket.offset == 0);
-        onepacket.id = ip_header->ident;
+        packets[frag_num].offset = ip_header->flags & 0x20;
+        packets[frag_num].is_last_frag = (packets[frag_num].offset == 0);
+        packets[frag_num].id = ip_header->ident;
         
         // printf("\n新数据包：\nSource IP: %u.%u.%u.%u, Destination IP: %u.%u.%u.%u\n", onepacket.src_ip[0], onepacket.src_ip[1], onepacket.src_ip[2], onepacket.src_ip[3],
         // onepacket.dest_ip[0], onepacket.dest_ip[1], onepacket.dest_ip[2], onepacket.dest_ip[3]);
-        
-        packets[frag_num ++] = onepacket;
-        if (frag_num == MAX_FRAG) frag_num = 0;
-        
-        if(onepacket.is_last_frag) {
+               
+        if(packets[frag_num].is_last_frag) {
             POnepOnepacket finalPack;
-            if(!reassemble_packet(&finalPack, onepacket.id)) return;
-            // printf("已完成TCP报文重组。结果为:\n");
-            // printf("%s\n\n", finalPack.packetcontent);
+            if(!reassemble_packet(&finalPack, packets[frag_num].id)) return;
+            printf("已完成TCP报文重组。结果为:\n");
+            printf("%s\n\n", finalPack.packetcontent);
+
+            //解码
+			char *tmp = url_decode(finalPack.packetcontent);
+			memcpy(finalPack.packetcontent, tmp, strlen(tmp));
+			finalPack.packetcontent[strlen(tmp) + 1] = '\0';
+			printf("\n解码后的内容为：%s\n\n", finalPack.packetcontent);
+			finalPack.contentlen = strlen(finalPack.packetcontent);
+			finalPack.totallen = finalPack.contentlen + 40;
 
 			if(choose_alg == 1) {
 				//暴力匹配
@@ -647,11 +695,13 @@ void pcap_callback(u_char *user, const struct pcap_pkthdr *header, const u_char 
 			}
         } else {
             printf("\033[1;34m");
-            printf("\nDetected New Fragment，ID = %d\n\n", onepacket.id);
+            printf("\nDetected New Fragment，ID = %d\n\n", packets[frag_num].id);
             printf("\033[0m");
         }
 		
     }
+	frag_num ++;
+	if (frag_num == MAX_FRAG) frag_num = 0;
 }
 
 int main(int argc,char *argv[])
