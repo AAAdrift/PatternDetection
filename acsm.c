@@ -1,8 +1,9 @@
-
 #include <stdarg.h>
 #include "acsm.h"
 #include <pcap.h>
 
+extern ATTACKPATTERN* pPatternHeader;
+acsm_context_t  *ctx;
 
 
 #define DEBUG 0
@@ -19,8 +20,6 @@ void debug_printf(const char *fmt, ...)
 #endif
 
 }
-
-
 
 
 acsm_state_queue_t *acsm_alloc_state_queue(acsm_context_t *ctx)
@@ -387,4 +386,102 @@ match_result_t acsm_search(acsm_context_t *ctx, u_char *text, size_t len)
     }
     return result;  // 返回当前搜索找到的匹配数量
 
+}
+
+
+/*************************************关键函数***********************************/
+
+/*
+函数matchpattern_AC - 使用AC匹配算法匹配单个模式与数据包内容
+参数1：捕获的数据包指针
+参数2：捕获的数据包基本信息
+Return：
+    匹配成功返回1
+    匹配失败返回2
+*/
+int matchpattern_AC(POnepOnepacket *pOnepacket, const struct pcap_pkthdr *header){
+    // 指向攻击模式链表的指针
+    ATTACKPATTERN *pOnepattern = pPatternHeader;
+    // 获取数据包内容
+    char *text = pOnepacket->packetcontent; 
+    // 获取数据包内容的长度
+    char text_len = pOnepacket->contentlen;
+    // 使用Aho-Corasick算法搜索匹配项
+    match_result_t matches = acsm_search(ctx, (u_char *)text, acsm_strlen(text));
+    // 存储匹配到的模式数量
+    int match_full = matches.count;
+    // 如果有匹配项，则进行处理
+    if (matches.count > 0) {
+        for (size_t i = 0; i < matches.count; ++i) {
+            // 获取匹配到的模式的ID
+            int count = matches.patterns[i];
+            pOnepattern = pPatternHeader;
+            // 根据模式ID找到对应的攻击模式
+            while(pOnepattern != NULL && count != 0){
+                pOnepattern = pOnepattern->next;
+                count--;
+            }
+            int max_len = max(strlen(pOnepattern->src), strlen(pOnepacket->src));
+            // 同时添加了对端口的判断
+            if(((strncmp(pOnepattern->src, "any", 3) == 0) || 
+                (strncmp(pOnepattern->src, pOnepacket->src, max_len) == 0)) &&
+               ((strncmp(pOnepattern->des, "any", 3) == 0) || 
+                (strncmp(pOnepattern->des, pOnepacket->des, max_len) == 0)))
+            {
+                // 如果匹配，则输出警告
+                output_alert_0(pOnepattern, pOnepacket, header);
+            }
+            else {
+                // 如果不匹配，则减少匹配数量
+                match_full--;
+            }
+        }
+    }
+    // 如果有匹配，则返回1
+    if (match_full > 0) return 1;
+    else {
+        // 如果没有匹配，则返回0
+        return 0;
+    }
+}
+
+/*
+函数init_AC - 用于初始化BM算法所需的数据结构
+参数：模式串链表头指针
+*/
+void init_AC(){
+    // 指向攻击模式链表的指针
+    ATTACKPATTERN *pOnepattern = pPatternHeader;
+    // 分配Aho-Corasick算法的上下文
+    ctx = acsm_alloc(0);
+    if (ctx == NULL) {
+        // 如果分配失败，输出错误并返回-1
+        fprintf(stderr, "acsm_alloc() error.\n");
+        return -1;
+    }
+    // 初始化模式串序号
+    int pattern_id = 0;
+    // 遍历攻击模式链表
+    while(pOnepattern != NULL) {
+        // 将模式添加到Aho-Corasick算法的上下文中
+        if (acsm_add_pattern(ctx, (u_char *)(pOnepattern->patterncontent), 
+                             acsm_strlen((u_char *)(pOnepattern->patterncontent)), pattern_id) != 0) {
+            // 如果添加失败，输出错误并返回-1
+            fprintf(stderr, "acsm_add_pattern() with pattern \"%s\" error.\n", 
+                    (u_char *)(pOnepattern->patterncontent));
+            return -1;
+        }
+        // 移动到下一个模式
+        pOnepattern = pOnepattern->next;
+        // 增加模式ID
+        pattern_id++;
+    }
+    // 输出调试信息
+    debug_printf("after add_pattern: max_state=%d\n", ctx->max_state);
+    // 编译Aho-Corasick算法的上下文
+    if (acsm_compile(ctx) != 0) {
+        // 如果编译失败，输出错误
+        fprintf(stderr, "acsm_compile() error.\n");
+        return -1;
+    }    
 }

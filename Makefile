@@ -14,15 +14,20 @@ TARGET=my_program
 all: $(TARGET)
 
 # 目标依赖于源文件
-$(TARGET): acsm.o PatternDetection.o
+$(TARGET): acsm.o bm_alg.o PatternDetection.o
 	$(CC)  -o $@ $^ $(LDFLAGS)
 
 # 从 acsm.c 生成 acsm.o
-acsm.o: acsm.c acsm.h
+acsm.o: acsm.c acsm.h PatternDetection.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
+# 从 bm_alg.c 生成 bm_alg.o
+bm_alg.o: bm_alg.c bm_alg.h PatternDetection.h
+	$(CC) $(CFLAGS) -c $< -o $@
+
+
 # 从 PatternDetection.c 生成 PatternDetection.o
-PatternDetection.o: PatternDetection_final1.c acsm.h
+PatternDetection.o: PatternDetection.c acsm.h bm_alg.h PatternDetection.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
 # 清理编译生成的文件
@@ -31,3 +36,4 @@ clean:
 
 # 声明伪目标
 .PHONY: all clean
+

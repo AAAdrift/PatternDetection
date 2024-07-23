@@ -7,6 +7,7 @@
 #include <string.h>
 #include <stddef.h>
 #include <pcap.h>
+#include "PatternDetection.h"
 
 #define ASCIITABLE_SIZE    (256)     
 
@@ -75,7 +76,6 @@ typedef struct {
 
 extern acsm_context_t *acsm_alloc(int flag);
 extern void acsm_free(acsm_context_t *ctx);
-
 extern int acsm_add_pattern(acsm_context_t *ctx, u_char *string, size_t len, int pattern_id); 
 extern int acsm_compile(acsm_context_t *ctx);
 extern match_result_t acsm_search(acsm_context_t *ctx, u_char *string, size_t len);
