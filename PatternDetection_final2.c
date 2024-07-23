@@ -395,7 +395,13 @@ void pcap_callback(u_char *user, const struct pcap_pkthdr *header, const u_char 
 				int i=0;
 				while(pOnepattern1 != NULL){
 					if (matchpattern_BM(pOnepattern1, &finalPack, i)){
-						output_alert_0(pOnepattern1, &finalPack, header);
+						if(((strncmp(pOnepattern1->src, "any", 3) == 0) || 
+							(strncmp(pOnepattern1->src, finalPack->src, max_len) == 0)) &&
+							((strncmp(pOnepattern1->des, "any", 3) == 0) || 
+							(strncmp(pOnepattern1->des, finalPack->des, max_len) == 0))){
+								output_alert_0(pOnepattern1, &finalPack, header);
+							}
+						
 						//printf("%s\n",onepacket.packetcontent);
 					}
 					pOnepattern1 = pOnepattern1->next;
