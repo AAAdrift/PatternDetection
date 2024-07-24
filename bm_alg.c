@@ -59,7 +59,7 @@ int badChar(char badChr,int badCharIndex,int modelStrIndex[],int modelStrLen) {
         //出现过			
         return badCharIndex - modelStrIndex[badChr];
     }
-    return modelStrLen;
+    return badCharIndex + 1;
 }
 
 //计算好后缀对应的移动位数,index为坏字符位置-其后面就是好后缀，size为str大小
