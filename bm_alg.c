@@ -76,7 +76,7 @@ int getGsMove(int suffix[], bool prefix[], int index, int size)
 	for (int i = index + 2; i < size; i++)
 	{
 		if (prefix[size - i])//因为prefix从1开始
-			return i;//移动当前位置离前缀位置，acba-对应a移动3
+			return i;//移动当前位置离前缀位置
 	}
 
 	return size;
